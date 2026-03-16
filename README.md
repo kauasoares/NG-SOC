@@ -36,6 +36,18 @@ O projeto é dividido em três camadas principais:
 ### 1. Configurando o Backend (Python / FastAPI)
 Navegue até a pasta raiz do backend e crie um ambiente virtual:
 ```bash
+
+Habilitando o Syslog (Para enviar logs ao Dashboard):
+
+Abra a CLI do FortiGate (via SSH ou pelo console na interface web).
+
+Digite os comandos abaixo, substituindo IP_DO_SEU_PC_PYTHON pelo IP da máquina onde o código vai rodar:
+config log syslogd setting
+    set status enable
+    set server "IP_DO_SEU_PC_PYTHON"
+    set port 5140
+end
+
 python -m venv venv
 
 ### Instale as dependências da API:
