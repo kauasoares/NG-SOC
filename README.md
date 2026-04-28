@@ -6,74 +6,93 @@
 ![Fortinet](https://img.shields.io/badge/Firewall-FortiGate_API-C00000)
 ![AI](https://img.shields.io/badge/AI_Engine-Google_Gemini-8E75B2)
 
-Um Centro de Operações de Segurança (SOC) de Nova Geração construído em arquitetura de Microsserviços. Este projeto integra análise de tráfego de rede em tempo real, geolocalização de ameaças e uma Inteligência Artificial (Copiloto) com capacidades de SOAR (Security Orchestration, Automation, and Response) para neutralização autônoma de ataques diretamente em firewalls Fortinet FortiGate.
+O NG-SOC é uma plataforma de monitoramento e resposta a incidentes (SIEM/SOAR) desenvolvida para centralizar a visibilidade de rede e automatizar a contenção de ameaças. O projeto integra telemetria de firewalls FortiGate em tempo real com uma interface tática moderna e inteligência artificial para análise de logs.
 
-*(Insira aqui uma captura de tela do seu Dashboard rodando)*
 
-## ✨ Funcionalidades Principais
+🚀 Funcionalidades Principais
+Ingestão de Logs (SIEM): Coletor Syslog de alta performance via UDP/5140.
 
-* **🌐 Global Threat Map (3D):** Renderização em tempo real da origem geográfica dos ataques usando `react-globe.gl` e geolocalização de IPs.
-* **🤖 AI ChatOps (SOAR):** Integração nativa com Google Gemini (SDK `google-genai`). A IA analisa logs táticos e tem permissão para executar chamadas de API para isolar IPs invasores.
-* **⚡ Resposta a Incidentes em 1-Clique:** Tabela de logs enriquecida com cálculo dinâmico de *Risk Score* (0 a 100) e botões de ação rápida para bloqueio de rede.
-* **📊 Telemetria Avançada:** Gráficos interativos (Recharts) mostrando alvos frequentes e uma linha do tempo (timeline) de ataques por minuto.
-* **🎨 UI/UX Cyberpunk:** Interface "Dark Mode" projetada em Tailwind CSS para alta legibilidade em ambientes de monitoramento contínuo.
+Resposta Ativa (SOAR): Bloqueio imediato de IPs maliciosos diretamente na API do FortiGate através da dashboard.
 
-## 🏗️ Arquitetura do Sistema
+Analytics Avançado: Gráficos interativos de distribuição de ameaças, volumetria de ataques e níveis de risco (Score).
 
-O projeto é dividido em três camadas principais:
-1. **Coleta (Edge):** Servidor Syslog em Python que escuta eventos do FortiGate e armazena em um banco SQLite.
-2. **Cérebro (Backend):** API REST assíncrona construída com FastAPI. Gerencia o banco de dados, o cache de geolocalização e as sessões de *Function Calling* da IA.
-3. **Apresentação (Frontend):** Aplicação Single-Page (SPA) em React.js consumindo a API em tempo real.
+Global Threat Map: Visualização 3D de geolocalização de tráfego e tentativas de invasão.
 
-## 🚀 Como Executar o Projeto
+AI Copilot: Assistente de segurança integrado para análise contextual de anomalias.
 
-### Pré-requisitos
-* Node.js (v18+)
-* Python (3.10+)
-* Um equipamento FortiGate (Físico ou VM) com API REST habilitada.
-* Chave de API do Google Gemini.
+Relatórios Executivos: Geração de relatórios de turno em PDF (Shift Reports) com um clique.
 
-### 1. Configurando o Backend (Python / FastAPI)
-Navegue até a pasta raiz do backend e crie um ambiente virtual:
-```bash
+Interface Multi-Tema: Visão Tática (Dark Mode) para analistas e Visão Executiva (Light Mode) para gerência.
 
-Habilitando o Syslog (Para enviar logs ao Dashboard):
+🛠️ Stack Tecnológica
+Backend (Core Engine)
+Python 3.10+
 
-Abra a CLI do FortiGate (via SSH ou pelo console na interface web).
+FastAPI: API de baixa latência para comunicação com o Frontend.
 
-Digite os comandos abaixo, substituindo IP_DO_SEU_PC_PYTHON pelo IP da máquina onde o código vai rodar:
+Socket & Threading: Captura paralela de logs Syslog (UDP).
+
+SQLite: Armazenamento persistente de logs e eventos.
+
+Uvicorn: Servidor ASGI de alta performance.
+
+Frontend (Command Center)
+React.js + Vite
+
+Tailwind CSS: Estilização tática e responsiva.
+
+Recharts: Visualização de dados e tendências de ataque.
+
+React-Globe.gl: Mapeamento global de ameaças em 3D.
+
+Lucide Icons: Iconografia técnica.
+
+🏗️ Arquitetura do Sistema
+Firewall (FortiGate): Dispara logs de tráfego para o IP do SOC na porta 5140.
+
+Syslog Server (Python): Recebe, processa via Regex e armazena os logs no banco de dados.
+
+FastAPI: Serve os dados processados e gerencia as ordens de bloqueio (SOAR).
+
+React Dashboard: Interface de usuário que consome a API e visualiza os incidentes.
+
+💻 Como Executar
+1. Preparação do Banco de Dados e API
+Bash
+# Clone o repositório
+git clone https://github.com/seu-usuario/ng-soc.git
+
+# Entre na pasta do backend
+cd ng-soc/backend
+
+# Instale as dependências
+pip install -r requirements.txt
+
+# Inicie o sistema (API + Syslog simultâneos)
+python main.py
+2. Preparação do Frontend
+Bash
+# Em outro terminal, entre na pasta do frontend
+cd ng-soc/frontend
+
+# Instale as dependências
+npm install
+
+# Inicie a Dashboard
+npm run dev
+3. Configuração no FortiGate
+No CLI do seu FortiGate, configure o envio de logs:
+
+Plaintext
 config log syslogd setting
     set status enable
-    set server "IP_DO_SEU_PC_PYTHON"
+    set server "IP_DA_SUA_MAQUINA"
     set port 5140
 end
 
-python -m venv venv
+Foco em: Cybersecurity, Networking, Cloud Infrastructure e Automação.
 
-### Instale as dependências da API:
-
-pip install fastapi uvicorn pydantic google-genai python-dotenv requests
-
-### Crie um arquivo .env com suas credenciais:
-GEMINI_API_KEY=sua_chave_api_aqui
-
-### Inicie o servidor do Backend:
-uvicorn main:app --reload
-A API estará rodando em http://localhost:8000.
-
-### 2. Configurando o Frontend (React)
-Em um novo terminal, navegue até a pasta do frontend (ng-soc-ui):
-cd ng-soc-ui
-npm install
-
-Inicie o servidor de desenvolvimento:
-npm run dev
-Acesse http://localhost:5173 no seu navegador para abrir o Centro de Comando.
-
-### 🛠️ Tecnologias Utilizadas
-Backend: Python, FastAPI, SQLite, Pydantic, Requests.
-
-Frontend: React, Vite, Tailwind CSS, Recharts, React-Globe.gl, Lucide-React.
+Este projeto foi desenvolvido para fins acadêmicos e laboratoriais, demonstrando a viabilidade de uma operação de SOC moderna com ferramentas Open Source.
 
 ### Segurança & IA: FortiOS REST API, Google Gemini Flash 2.5.
 # Ative o ambiente virtual (Windows):
