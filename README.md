@@ -70,8 +70,7 @@ pip install -r requirements.txt
 
 # Inicie o sistema (API + Syslog simultâneos)
 python main.py
-2. Preparação do Frontend
-Bash
+
 # Em outro terminal, entre na pasta do frontend
 cd ng-soc/frontend
 
@@ -80,10 +79,10 @@ npm install
 
 # Inicie a Dashboard
 npm run dev
+
 3. Configuração no FortiGate
 No CLI do seu FortiGate, configure o envio de logs:
 
-Plaintext
 config log syslogd setting
     set status enable
     set server "IP_DA_SUA_MAQUINA"
