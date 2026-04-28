@@ -61,7 +61,7 @@ graph TD
 ```
 
 
-🛠️ Tecnologias Utilizadas
+## 🛠️ Tecnologias Utilizadas
 ⚙️ Engine de Captura & Backend
 Python (Lógica central e socket UDP)
 
@@ -71,7 +71,7 @@ SQLite (Armazenamento rápido e leve)
 
 Regex (Parsing dos pacotes FortiOS)
 
-🎨 Command Center & Frontend
+## 🎨 Command Center & Frontend
 React.js + Vite (Renderização rápida da interface)
 
 Tailwind CSS (Design System corporativo/cyber)
@@ -82,7 +82,7 @@ React-Globe.gl (Renderização 3D do globo de ameaças)
 
 jsPDF (Geração forense de relatórios em documento)
 
-🚀 Como Executar (Quick Start)
+## 🚀 Como Executar (Quick Start)
 Pré-requisitos
 Node.js (v16+)
 
