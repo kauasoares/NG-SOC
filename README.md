@@ -57,7 +57,8 @@ graph TD
     D[⚡ FastAPI Backend] <-->|Leitura/Consultas| C
     E[💻 React Dashboard] <-->|Polling / API REST| D
     E -->|1-Click Block / Payload| D
-    D -->|Bloqueio Automatizado| A```
+    D -->|Bloqueio Automatizado| A
+```
 
 
 🛠️ Tecnologias Utilizadas
