@@ -59,8 +59,6 @@ graph TD
     E -->|1-Click Block / Payload| D
     D -->|Bloqueio Automatizado| A´´´
 
-
-
 🛠️ Tecnologias Utilizadas
 ⚙️ Engine de Captura & Backend
 Python (Lógica central e socket UDP)
