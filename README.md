@@ -1,98 +1,60 @@
-# 🛡️ Next-Gen SOC: Autonomous Threat Intelligence & SOAR
+<div align="center">
+  
+# 🛡️ NG-SOC | Next-Generation Command Center
+**Plataforma Avançada de SIEM & SOAR com Integração em Tempo Real**
 
-![Status](https://img.shields.io/badge/Status-Operacional-success)
-![Python](https://img.shields.io/badge/Backend-Python_FastAPI-3776AB?logo=python&logoColor=white)
-![React](https://img.shields.io/badge/Frontend-React_Vite-61DAFB?logo=react&logoColor=black)
-![Fortinet](https://img.shields.io/badge/Firewall-FortiGate_API-C00000)
-![AI](https://img.shields.io/badge/AI_Engine-Google_Gemini-8E75B2)
+[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![React](https://img.shields.io/badge/React-2024-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Fortinet](https://img.shields.io/badge/Hardware-FortiGate-CC0000?style=for-the-badge&logo=fortinet&logoColor=white)](https://www.fortinet.com/)
 
-O NG-SOC é uma plataforma de monitoramento e resposta a incidentes (SIEM/SOAR) desenvolvida para centralizar a visibilidade de rede e automatizar a contenção de ameaças. O projeto integra telemetria de firewalls FortiGate em tempo real com uma interface tática moderna e inteligência artificial para análise de logs.
+O **NG-SOC** é um laboratório de Defesa Cibernética de ponta a ponta. Ele resolve o problema da fadiga de alertas ao centralizar a ingestão de logs do firewall, aplicar inteligência analítica e permitir a contenção imediata de ameaças com um único clique.
 
+</div>
 
-🚀 Funcionalidades Principais
-Ingestão de Logs (SIEM): Coletor Syslog de alta performance via UDP/5140.
+---
 
-Resposta Ativa (SOAR): Bloqueio imediato de IPs maliciosos diretamente na API do FortiGate através da dashboard.
+## 📋 Tabela de Conteúdos
+1. [Sobre o Projeto](#-sobre-o-projeto)
+2. [Principais Funcionalidades](#-principais-funcionalidades)
+3. [Arquitetura do Sistema](#-arquitetura-do-sistema)
+4. [Tecnologias Utilizadas](#-tecnologias-utilizadas)
+5. [Como Executar (Quick Start)](#-como-executar-quick-start)
+6. [Galeria](#-galeria)
+7. [Autor](#-autor)
 
-Analytics Avançado: Gráficos interativos de distribuição de ameaças, volumetria de ataques e níveis de risco (Score).
+---
 
-Global Threat Map: Visualização 3D de geolocalização de tráfego e tentativas de invasão.
+## 🎯 Sobre o Projeto
 
-AI Copilot: Assistente de segurança integrado para análise contextual de anomalias.
+Este projeto foi construído para simular uma operação real de **Blue Team** e **SOC (Security Operations Center)**. Ele não apenas consome telemetria de rede passivamente, mas age como um orquestrador de segurança (SOAR), comunicando-se de volta com a infraestrutura para bloquear tráfego malicioso de forma automatizada.
 
-Relatórios Executivos: Geração de relatórios de turno em PDF (Shift Reports) com um clique.
+> **Objetivo Acadêmico:** Validar conceitos de segurança de perímetro, roteamento, consumo de APIs REST, processamento de dados em tempo real e desenvolvimento de interfaces táticas.
 
-Interface Multi-Tema: Visão Tática (Dark Mode) para analistas e Visão Executiva (Light Mode) para gerência.
+---
 
-🛠️ Stack Tecnológica
-Backend (Core Engine)
-Python 3.10+
+## ✨ Principais Funcionalidades
 
-FastAPI: API de baixa latência para comunicação com o Frontend.
+- **📡 Ingestão de Telemetria (SIEM):** Coletor de logs Syslog customizado via UDP, capaz de processar eventos de segurança gerados por firewalls.
+- **⚡ Resposta Ativa (SOAR):** Bloqueio imediato de atacantes injetando IPs diretamente na *Blocklist* do FortiGate via Dashboard.
+- **📊 Threat Analytics Avançado:** Dashboards dinâmicos com gráficos de rosca e barras para categorização de ameaças (Brute Force, Scan, etc).
+- **🌍 Global Threat Map:** Mapeamento 3D interativo geolocalizando a origem dos ataques.
+- **🤖 AI Copilot:** Motor de inteligência que simula a análise automatizada de logs suspeitos.
+- **📄 Relatórios Executivos:** Geração de *Shift Reports* (Relatórios de Turno) em formato PDF, prontos para auditoria de compliance.
+- **🌓 Dual-View UI:** Suporte a "Visão Tática" (Dark Mode) para analistas e "Visão Executiva" (Light Mode) para gestão.
 
-Socket & Threading: Captura paralela de logs Syslog (UDP).
+---
 
-SQLite: Armazenamento persistente de logs e eventos.
+## 🧠 Arquitetura do Sistema
 
-Uvicorn: Servidor ASGI de alta performance.
+O diagrama abaixo ilustra o fluxo de dados em tempo real do sistema:
 
-Frontend (Command Center)
-React.js + Vite
-
-Tailwind CSS: Estilização tática e responsiva.
-
-Recharts: Visualização de dados e tendências de ataque.
-
-React-Globe.gl: Mapeamento global de ameaças em 3D.
-
-Lucide Icons: Iconografia técnica.
-
-🏗️ Arquitetura do Sistema
-Firewall (FortiGate): Dispara logs de tráfego para o IP do SOC na porta 5140.
-
-Syslog Server (Python): Recebe, processa via Regex e armazena os logs no banco de dados.
-
-FastAPI: Serve os dados processados e gerencia as ordens de bloqueio (SOAR).
-
-React Dashboard: Interface de usuário que consome a API e visualiza os incidentes.
-
-💻 Como Executar
-1. Preparação do Banco de Dados e API
-Bash
-# Clone o repositório
-git clone https://github.com/seu-usuario/ng-soc.git
-
-# Entre na pasta do backend
-cd ng-soc/backend
-
-# Instale as dependências
-pip install -r requirements.txt
-
-# Inicie o sistema (API + Syslog simultâneos)
-python main.py
-
-# Em outro terminal, entre na pasta do frontend
-cd ng-soc/frontend
-
-# Instale as dependências
-npm install
-
-# Inicie a Dashboard
-npm run dev
-
-3. Configuração no FortiGate
-No CLI do seu FortiGate, configure o envio de logs:
-
-config log syslogd setting
-    set status enable
-    set server "IP_DA_SUA_MAQUINA"
-    set port 5140
-end
-
-Foco em: Cybersecurity, Networking, Cloud Infrastructure e Automação.
-
-Este projeto foi desenvolvido para fins acadêmicos e laboratoriais, demonstrando a viabilidade de uma operação de SOC moderna com ferramentas Open Source.
-
-### Segurança & IA: FortiOS REST API, Google Gemini Flash 2.5.
-# Ative o ambiente virtual (Windows):
-venv\Scripts\activate
+```mermaid
+graph TD
+    A[🔥 FortiGate Firewall] -->|Logs via UDP/5140| B(🐍 Syslog Collector)
+    B -->|Gravação| C[(🗄️ Banco de Dados SQLite)]
+    D[⚡ FastAPI Backend] <-->|Leitura/Consultas| C
+    E[💻 React Dashboard] <-->|Polling / API REST| D
+    E -->|1-Click Block / Payload| D
+    D -->|Bloqueio Automatizado| A
