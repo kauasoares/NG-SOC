@@ -58,3 +58,61 @@ graph TD
     E[💻 React Dashboard] <-->|Polling / API REST| D
     E -->|1-Click Block / Payload| D
     D -->|Bloqueio Automatizado| A
+
+🛠️ Tecnologias Utilizadas
+⚙️ Engine de Captura & Backend
+Python (Lógica central e socket UDP)
+
+FastAPI + Uvicorn (Servidor Web e endpoints da API)
+
+SQLite (Armazenamento rápido e leve)
+
+Regex (Parsing dos pacotes FortiOS)
+
+🎨 Command Center & Frontend
+React.js + Vite (Renderização rápida da interface)
+
+Tailwind CSS (Design System corporativo/cyber)
+
+Recharts (Construção dos painéis de métricas e analytics)
+
+React-Globe.gl (Renderização 3D do globo de ameaças)
+
+jsPDF (Geração forense de relatórios em documento)
+
+🚀 Como Executar (Quick Start)
+Pré-requisitos
+Node.js (v16+)
+
+Python (3.10+)
+
+Uma instância do FortiGate (Máquina Virtual ou Física) configurada para enviar Syslog.
+
+1. Inicializando o Backend & Syslog
+Abra um terminal e execute:
+
+Bash
+git clone [https://github.com/SEU_USUARIO/ng-soc.git](https://github.com/SEU_USUARIO/ng-soc.git)
+cd ng-soc/backend
+pip install -r requirements.txt
+python main.py
+A API ficará disponível em http://localhost:8000 e o Syslog estará escutando na porta 5140.
+
+2. Inicializando o Frontend
+Abra um novo terminal e execute:
+
+Bash
+cd ng-soc/frontend
+npm install
+npm run dev
+A Dashboard ficará disponível em http://localhost:5173. Credenciais padrão: admin / senai2026.
+
+3. Configuração do FortiGate (CLI)
+Para que o firewall alimente o SOC, rode os seguintes comandos no console do FortiOS:
+
+Plaintext
+config log syslogd setting
+    set status enable
+    set server "IP_DA_MAQUINA_DO_SOC"
+    set port 5140
+end
