@@ -21,8 +21,6 @@ O **NG-SOC** é um laboratório de Defesa Cibernética de ponta a ponta. Ele res
 3. [Arquitetura do Sistema](#-arquitetura-do-sistema)
 4. [Tecnologias Utilizadas](#-tecnologias-utilizadas)
 5. [Como Executar (Quick Start)](#-como-executar-quick-start)
-6. [Galeria](#-galeria)
-7. [Autor](#-autor)
 
 ---
 
