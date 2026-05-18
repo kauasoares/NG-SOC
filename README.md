@@ -102,6 +102,7 @@ Abra um terminal e execute:
 Bash
 # Clonar o repositório
 git clone [https://github.com/kauasoares/ng-soc.git](https://github.com/kauasoares/ng-soc.git)
+
 cd ng-soc/backend
 
 # Instalar dependências
@@ -109,6 +110,7 @@ pip install -r requirements.txt
 
 # Executar o motor SIEM e API
 python main.py
+
 📍 A API ficará disponível em http://localhost:8000 e o Syslog estará escutando na porta UDP 5140.
 
 2. Inicializando o Frontend
@@ -122,15 +124,22 @@ npm install
 
 # Iniciar a interface do SOC
 npm run dev
+
 📍 A Dashboard ficará disponível em http://localhost:5173.
+
 🔑 Credenciais padrão: admin / senai2026
 
 3. Configuração do FortiGate (CLI)
 Para que o firewall alimente o SOC, rode os seguintes comandos no console do FortiOS:
 
 Bash
+
 config log syslogd setting
+  
     set status enable
+  
     set server "IP_DA_MAQUINA_DO_SOC"
+  
     set port 5140
+
 end
