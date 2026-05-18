@@ -28,20 +28,20 @@ O **NG-SOC** é um laboratório de Defesa Cibernética de ponta a ponta. Ele res
 
 Este projeto foi construído para simular uma operação real de **Blue Team** e **SOC (Security Operations Center)**. Ele não apenas consome telemetria de rede passivamente, mas age como um orquestrador de segurança (SOAR), comunicando-se de volta com a infraestrutura para bloquear tráfego malicioso de forma automatizada.
 
-> **Objetivo Acadêmico:** Validar conceitos de segurança de perímetro, roteamento, consumo de APIs REST, processamento de dados em tempo real, deteção de ameaças não-assinadas (Zero-Day) e desenvolvimento de interfaces táticas.
+> **💡 Objetivo Acadêmico:** Validar conceitos de segurança de perímetro, roteamento, consumo de APIs REST, processamento de dados em tempo real, deteção de ameaças não-assinadas (Zero-Day) e desenvolvimento de interfaces táticas.
 
 ---
 
 ## ✨ Principais Funcionalidades
 
-- **📡 Ingestão de Telemetria L7 (SIEM):** Coletor Syslog customizado via UDP, processando eventos com visibilidade de Aplicação e Identidade de utilizadores, indo muito além da Camada 3.
-- **🦠 Validador de Zero-Day (Heurística):** Motor Python que inspeciona payloads à procura de padrões evasivos (ex: Base64, RCE, Path Traversal, Log4j) sem depender de assinaturas conhecidas.
-- **🛡️ Mapeamento MITRE ATT&CK®:** Tradução automática de incidentes para a taxonomia oficial de Táticas e Técnicas da Kill Chain (ex: *TA0006 Credential Access / T1110 Brute Force*).
-- **⚡ Resposta Ativa (SOAR):** Bloqueio imediato de atacantes injetando IPs diretamente na *Blocklist* do FortiGate via API RESTful.
-- **📊 Threat Analytics Avançado:** Dashboards dinâmicos para categorização de ameaças e score de postura de risco em tempo real.
-- **🌍 Global Threat Map:** Mapeamento 3D interativo geolocalizando a origem dos ataques globais.
-- **🤖 AI Copilot:** Assistente virtual tático integrado com motor LLM para triagem rápida.
-- **📬 Relatórios Cloud-Native:** Disparo automatizado de alertas críticos e relatórios compilados em PDF via API Transacional de E-mail (*Resend*).
+* **📡 Ingestão de Telemetria L7 (SIEM):** Coletor Syslog customizado via UDP, processando eventos com visibilidade de Aplicação e Identidade de utilizadores, indo muito além da Camada 3.
+* **🦠 Validador de Zero-Day (Heurística):** Motor Python que inspeciona payloads à procura de padrões evasivos (ex: Base64, RCE, Path Traversal, Log4j) sem depender de assinaturas conhecidas.
+* **🛡️ Mapeamento MITRE ATT&CK®:** Tradução automática de incidentes para a taxonomia oficial de Táticas e Técnicas da Kill Chain (ex: *TA0006 Credential Access / T1110 Brute Force*).
+* **⚡ Resposta Ativa (SOAR):** Bloqueio imediato de atacantes injetando IPs diretamente na *Blocklist* do FortiGate via API RESTful.
+* **📊 Threat Analytics Avançado:** Dashboards dinâmicos para categorização de ameaças e score de postura de risco em tempo real.
+* **🌍 Global Threat Map:** Mapeamento 3D interativo geolocalizando a origem dos ataques globais.
+* **🤖 AI Copilot:** Assistente virtual tático integrado com motor LLM para triagem rápida.
+* **📬 Relatórios Cloud-Native:** Disparo automatizado de alertas críticos e relatórios compilados em PDF via API Transacional de E-mail (*Resend*).
 
 ---
 
@@ -57,43 +57,38 @@ graph TD
     E[💻 React Dashboard] <-->|Polling / API REST| D
     E -->|Gerar Relatório PDF| F[📧 Resend API]
     E -->|SOAR: Bloquear IP| D
-    D -->|Injeção API| A
-
+    D -->|Injeção API| A ```
 
 🛠️ Tecnologias Utilizadas
 ⚙️ Engine de Captura & Backend
+Python (3.10+): Lógica central e socket UDP.
 
-Python (3.10+): Lógica central e socket UDP
+FastAPI + Uvicorn: Servidor Web assíncrono e endpoints API.
 
-FastAPI + Uvicorn: Servidor Web assíncrono e endpoints API
+SQLite: Armazenamento relacional rápido e leve.
 
-SQLite: Armazenamento relacional rápido e leve
-
-Regex / Heurística: Parsing dos pacotes FortiOS e deteção de RCE
+Regex / Heurística: Parsing dos pacotes FortiOS e deteção de RCE.
 
 🎨 Command Center & Frontend
+React.js + Vite: Renderização rápida da interface tática.
 
-React.js + Vite: Renderização rápida da interface tática
+Tailwind CSS: Design System corporativo com tema "Neon Dark".
 
-Tailwind CSS: Design System corporativo com tema "Neon Dark"
+Recharts: Construção dos painéis de métricas e analytics.
 
-Recharts: Construção dos painéis de métricas e analytics
+React-Globe.gl: Renderização 3D do globo de ameaças.
 
-React-Globe.gl: Renderização 3D do globo de ameaças
-
-jsPDF + autoTable: Geração forense de relatórios em documento offline
+jsPDF + autoTable: Geração forense de relatórios em documento offline.
 
 ☁️ Integrações Cloud & APIs
+FortiOS API: Orquestração de bloqueios e leitura de políticas no firewall.
 
-FortiOS API: Orquestração de bloqueios e leitura de políticas no firewall
+Resend API: Motor de e-mails transacionais (Alertas SOC).
 
-Resend API: Motor de e-mails transacionais (Alertas SOC)
-
-Google GenAI SDK: Motor de Inteligência Artificial do Copilot
+Google GenAI SDK: Motor de Inteligência Artificial do Copilot.
 
 🚀 Como Executar (Quick Start)
 Pré-requisitos
-
 Node.js (v18+)
 
 Python (3.10+)
@@ -104,6 +99,7 @@ Uma instância do FortiGate (Máquina Virtual ou Física) configurada para envia
 Abra um terminal e execute:
 
 Bash
+# Clonar o repositório
 git clone [https://github.com/kauasoares/ng-soc.git](https://github.com/kauasoares/ng-soc.git)
 cd ng-soc/backend
 
@@ -112,7 +108,7 @@ pip install -r requirements.txt
 
 # Executar o motor SIEM e API
 python main.py
-A API ficará disponível em http://localhost:8000 e o Syslog estará escutando na porta UDP 5140.
+📍 A API ficará disponível em http://localhost:8000 e o Syslog estará escutando na porta UDP 5140.
 
 2. Inicializando o Frontend
 Abra um novo terminal e execute:
@@ -125,12 +121,13 @@ npm install
 
 # Iniciar a interface do SOC
 npm run dev
-A Dashboard ficará disponível em http://localhost:5173. Credenciais padrão: admin / senai2026.
+📍 A Dashboard ficará disponível em http://localhost:5173.
+🔑 Credenciais padrão: admin / senai2026
 
 3. Configuração do FortiGate (CLI)
 Para que o firewall alimente o SOC, rode os seguintes comandos no console do FortiOS:
 
-Plaintext
+Bash
 config log syslogd setting
     set status enable
     set server "IP_DA_MAQUINA_DO_SOC"
