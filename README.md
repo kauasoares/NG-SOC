@@ -92,7 +92,7 @@ Uma instância do FortiGate (Máquina Virtual ou Física) configurada para envia
 Abra um terminal e execute:
 
 Bash
-git clone [https://github.com/SEU_USUARIO/ng-soc.git](https://github.com/SEU_USUARIO/ng-soc.git)
+git clone [https://github.com/kauasoares/ng-soc.git](https://github.com/kauasoares/ng-soc.git)
 cd ng-soc/backend
 pip install -r requirements.txt
 python main.py
