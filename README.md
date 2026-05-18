@@ -58,3 +58,81 @@ graph TD
     E -->|Gerar Relatório PDF| F[📧 Resend API]
     E -->|SOAR: Bloquear IP| D
     D -->|Injeção API| A
+
+
+🛠️ Tecnologias Utilizadas
+⚙️ Engine de Captura & Backend
+
+Python (3.10+): Lógica central e socket UDP
+
+FastAPI + Uvicorn: Servidor Web assíncrono e endpoints API
+
+SQLite: Armazenamento relacional rápido e leve
+
+Regex / Heurística: Parsing dos pacotes FortiOS e deteção de RCE
+
+🎨 Command Center & Frontend
+
+React.js + Vite: Renderização rápida da interface tática
+
+Tailwind CSS: Design System corporativo com tema "Neon Dark"
+
+Recharts: Construção dos painéis de métricas e analytics
+
+React-Globe.gl: Renderização 3D do globo de ameaças
+
+jsPDF + autoTable: Geração forense de relatórios em documento offline
+
+☁️ Integrações Cloud & APIs
+
+FortiOS API: Orquestração de bloqueios e leitura de políticas no firewall
+
+Resend API: Motor de e-mails transacionais (Alertas SOC)
+
+Google GenAI SDK: Motor de Inteligência Artificial do Copilot
+
+🚀 Como Executar (Quick Start)
+Pré-requisitos
+
+Node.js (v18+)
+
+Python (3.10+)
+
+Uma instância do FortiGate (Máquina Virtual ou Física) configurada para enviar Syslog.
+
+1. Inicializando o Backend & Syslog
+Abra um terminal e execute:
+
+Bash
+git clone [https://github.com/kauasoares/ng-soc.git](https://github.com/kauasoares/ng-soc.git)
+cd ng-soc/backend
+
+# Instalar dependências
+pip install -r requirements.txt
+
+# Executar o motor SIEM e API
+python main.py
+A API ficará disponível em http://localhost:8000 e o Syslog estará escutando na porta UDP 5140.
+
+2. Inicializando o Frontend
+Abra um novo terminal e execute:
+
+Bash
+cd ng-soc/frontend
+
+# Instalar dependências Node
+npm install
+
+# Iniciar a interface do SOC
+npm run dev
+A Dashboard ficará disponível em http://localhost:5173. Credenciais padrão: admin / senai2026.
+
+3. Configuração do FortiGate (CLI)
+Para que o firewall alimente o SOC, rode os seguintes comandos no console do FortiOS:
+
+Plaintext
+config log syslogd setting
+    set status enable
+    set server "IP_DA_MAQUINA_DO_SOC"
+    set port 5140
+end
