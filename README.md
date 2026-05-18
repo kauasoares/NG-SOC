@@ -59,7 +59,7 @@ graph TD
     E -->|SOAR: Bloquear IP| D
     D -->|Injeção API| A ```
 
-🛠️ Tecnologias Utilizadas
+## 🛠️ Tecnologias Utilizadas
 ⚙️ Engine de Captura & Backend
 Python (3.10+): Lógica central e socket UDP.
 
@@ -69,7 +69,7 @@ SQLite: Armazenamento relacional rápido e leve.
 
 Regex / Heurística: Parsing dos pacotes FortiOS e deteção de RCE.
 
-🎨 Command Center & Frontend
+## 🎨 Command Center & Frontend
 React.js + Vite: Renderização rápida da interface tática.
 
 Tailwind CSS: Design System corporativo com tema "Neon Dark".
@@ -80,14 +80,14 @@ React-Globe.gl: Renderização 3D do globo de ameaças.
 
 jsPDF + autoTable: Geração forense de relatórios em documento offline.
 
-☁️ Integrações Cloud & APIs
+## ☁️ Integrações Cloud & APIs
 FortiOS API: Orquestração de bloqueios e leitura de políticas no firewall.
 
 Resend API: Motor de e-mails transacionais (Alertas SOC).
 
 Google GenAI SDK: Motor de Inteligência Artificial do Copilot.
 
-🚀 Como Executar (Quick Start)
+## 🚀 Como Executar (Quick Start)
 Pré-requisitos
 Node.js (v18+)
 
