@@ -57,7 +57,8 @@ graph TD
     E[💻 React Dashboard] <-->|Polling / API REST| D
     E -->|Gerar Relatório PDF| F[📧 Resend API]
     E -->|SOAR: Bloquear IP| D
-    D -->|Injeção API| A ```
+    D -->|Injeção API| A
+```
 
 ## 🛠️ Tecnologias Utilizadas
 ⚙️ Engine de Captura & Backend
