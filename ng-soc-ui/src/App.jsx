@@ -141,21 +141,28 @@ function IncidentPopup({ incident, onClose, onBlock }) {
 }
 
 // ==========================================
-// ABA 1: HOME (Corrigida a Lógica de Risco)
-// ==========================================
-// ==========================================
-// ABA 1: HOME (Corrigida a Lógica de Risco e Tabela L7)
+// ABA 1: HOME (Risco Dinâmico, Tabela sem L7, Mapa Animado)
 // ==========================================
 function HomeTab({ stats, incidents }) {
-  // O Risco é o inverso da Postura (Saúde)
-  const riskLevel = 100 - stats.posture_score;
+  // O Risco agora é reativo: reflete o alerta mais grave em tempo real
+  const maxRecentRisk = incidents.length > 0 ? Math.max(...incidents.slice(0, 5).map(inc => inc.risk_score)) : 0;
+  const riskLevel = maxRecentRisk > 0 ? maxRecentRisk : (stats.total_threats > 0 ? 10 : 0);
   const riskPie = [{ name: 'Risk', value: riskLevel, fill: COLORS.pink }, { name: 'Safe', value: 100 - riskLevel, fill: COLORS.cardBorder }];
+
+  // Referência para animar o globo
+  const globeRef = useRef();
+  useEffect(() => {
+    if (globeRef.current) {
+      globeRef.current.controls().autoRotate = true;
+      globeRef.current.controls().autoRotateSpeed = 1.2;
+    }
+  }, []);
 
   return (
     <div className="grid grid-cols-12 gap-5 h-full">
       {/* COLUNA ESQUERDA */}
       <div className="col-span-12 xl:col-span-3 flex flex-col gap-5">
-        <Panel title="Nível de Risco" rightAction={<span className="bg-[#0b0914] text-[#8b8a96] border border-[#231f36] text-[10px] rounded px-2 py-1">24 horas</span>}>
+        <Panel title="Nível de Risco" rightAction={<span className="bg-[#0b0914] text-[#8b8a96] border border-[#231f36] text-[10px] rounded px-2 py-1">Tempo Real</span>}>
            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-[#7000ff]/20 blur-[50px] rounded-full pointer-events-none"></div>
            <div className="h-48 relative flex justify-center items-center mt-2">
              <ResponsiveContainer width="100%" height="100%">
@@ -164,49 +171,45 @@ function HomeTab({ stats, incidents }) {
                </PieChart>
              </ResponsiveContainer>
              <div className="absolute top-[40%] left-1/2 -translate-x-1/2 -translate-y-[20%] text-center">
-                <AlertTriangle size={16} className="text-[#ff007f] mx-auto mb-1" />
+                <AlertTriangle size={16} className={`${riskLevel >= 80 ? 'text-[#ff007f] animate-pulse' : riskLevel >= 50 ? 'text-[#f59e0b]' : 'text-[#00f0ff]'} mx-auto mb-1`} />
                 <span className="text-4xl font-bold text-white">{riskLevel}%</span>
              </div>
            </div>
            <div className="flex justify-between items-center text-[10px] text-[#8b8a96] mt-4">
               <div className="flex items-center gap-2">
                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#00f0ff]"></span>Baixo</span>
-                 <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#7000ff]"></span>Médio</span>
+                 <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#f59e0b]"></span>Médio</span>
                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#ff007f]"></span>Crítico</span>
               </div>
            </div>
         </Panel>
 
-        <Panel title="Últimos incidentes" className="flex-1" rightAction={<span className="bg-[#0b0914] text-[#8b8a96] border border-[#231f36] text-[10px] rounded px-2 py-1">Tempo Real</span>}>
+        <Panel title="Últimos incidentes" className="flex-1" rightAction={<span className="bg-[#0b0914] text-[#8b8a96] border border-[#231f36] text-[10px] rounded px-2 py-1">Live</span>}>
           <div className="overflow-x-auto mt-2 max-h-[350px]">
             <table className="w-full text-left text-sm whitespace-nowrap">
               <thead>
                 <tr className="text-[#8b8a96] border-b border-[#231f36]">
-                  <th className="pb-3 font-medium">Timestamp</th>
+                  <th className="pb-3 font-medium">Time</th>
                   <th className="pb-3 font-medium">Risk</th>
                   <th className="pb-3 font-medium">IP Origem</th>
-                  <th className="pb-3 font-medium">Aplicação (L7)</th>
                   <th className="pb-3 font-medium">Assinatura / Evento</th>
-                  <th className="pb-3 font-medium">Ação (FW)</th>
+                  <th className="pb-3 font-medium text-right">Ação</th>
                 </tr>
               </thead>
               <tbody className="font-mono">
                 {incidents.slice(0, 8).map((log, i) => (
                   <tr key={i} className="border-b border-[#231f36]/50 hover:bg-[#0b0914] transition-colors">
-                    <td className="py-3 text-[#8b8a96]">{log.timestamp.split(' ')[1]}</td>
+                    <td className="py-3 text-[#8b8a96] text-xs">{log.timestamp.split(' ')[1]}</td>
                     <td className="py-3">
-                      {/* AS CRASES ESTÃO CORRIGIDAS NESTA LINHA ABAIXO! */}
                       <span className={`px-2 py-1 rounded text-xs ${log.risk_score > 80 ? 'bg-[#ff007f]/20 text-[#ff007f]' : log.risk_score > 40 ? 'bg-[#f59e0b]/20 text-[#f59e0b]' : 'bg-[#10b981]/20 text-[#10b981]'}`}>
                         {log.risk_score}
                       </span>
                     </td>
                     <td className="py-3 text-white">
                        {log.src_ip}
-                       {log.user_name && log.user_name !== 'Anónimo' && <span className="block text-[10px] text-[#7000ff]">{log.user_name}</span>}
                     </td>
-                    <td className="py-3 text-[#00f0ff]">{log.app_name !== 'Desconhecida' ? log.app_name : `Port ${log.dst_port}`}</td>
-                    <td className="py-3 text-[#8b8a96] truncate max-w-[200px]" title={log.threat_msg}>{log.threat_msg}</td>
-                    <td className={`py-3 uppercase ${log.action === 'deny' || log.action === 'drop' ? 'text-[#ff007f]' : 'text-[#10b981]'}`}>{log.action}</td>
+                    <td className="py-3 text-[#8b8a96] text-xs truncate max-w-[150px]" title={log.threat_msg}>{log.threat_msg}</td>
+                    <td className={`py-3 text-right uppercase text-xs font-bold ${log.action === 'deny' || log.action === 'drop' ? 'text-[#ff007f]' : 'text-[#10b981]'}`}>{log.action}</td>
                   </tr>
                 ))}
               </tbody>
@@ -218,9 +221,25 @@ function HomeTab({ stats, incidents }) {
 
       {/* COLUNA CENTRAL */}
       <div className="col-span-12 xl:col-span-6 flex flex-col gap-5">
-        <Panel title="Mapa de ataque (Global Threat Map)" className="h-[350px]" rightAction={<span className="text-[10px] text-[#00f0ff]">Live Telemetry</span>}>
-           <div className="absolute inset-0 top-12 flex justify-center items-center opacity-80 pointer-events-none">
-             <Globe width={550} height={320} globeImageUrl="//unpkg.com/three-globe/example/img/earth-dark.jpg" backgroundColor="rgba(0,0,0,0)" showAtmosphere={false} arcsData={stats.map_data || []} arcColor="color" arcDashLength={0.5} arcDashGap={0.1} arcDashAnimateTime={1200} arcStroke={1.5} />
+        <Panel title="Mapa de ataque (Global Threat Map)" className="h-[350px]" rightAction={<span className="text-[10px] text-[#00f0ff] animate-pulse">Live Telemetry</span>}>
+           <div className="absolute inset-0 top-12 flex justify-center items-center opacity-90 cursor-move">
+             <Globe 
+                ref={globeRef}
+                width={550} 
+                height={320} 
+                globeImageUrl="//unpkg.com/three-globe/example/img/earth-dark.jpg" 
+                backgroundColor="rgba(0,0,0,0)" 
+                showAtmosphere={true}
+                atmosphereColor="#7000ff"
+                atmosphereAltitude={0.15}
+                arcsData={stats.map_data || []} 
+                arcColor="color" 
+                arcDashLength={0.6} 
+                arcDashGap={0.2} 
+                arcDashAnimateTime={1500} 
+                arcStroke={2} 
+                arcAltitude={0.25}
+             />
            </div>
         </Panel>
         
@@ -233,12 +252,14 @@ function HomeTab({ stats, incidents }) {
             <AreaChart data={stats.timeline} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorVol" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#00f0ff" stopOpacity={0.3}/><stop offset="95%" stopColor="#00f0ff" stopOpacity={0}/></linearGradient>
+                <linearGradient id="colorBlock" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#ff007f" stopOpacity={0.4}/><stop offset="95%" stopColor="#ff007f" stopOpacity={0}/></linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#231f36" />
               <XAxis dataKey="time" stroke="#8b8a96" fontSize={10} axisLine={false} tickLine={false} />
               <YAxis stroke="#8b8a96" fontSize={10} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={{backgroundColor: '#0b0914', borderColor: '#231f36'}} />
-              <Area type="monotone" dataKey="attacks" stroke="#00f0ff" strokeWidth={3} fillOpacity={1} fill="url(#colorVol)" />
+              <Tooltip contentStyle={{backgroundColor: '#0b0914', borderColor: '#231f36', color: '#fff'}} />
+              <Area type="monotone" dataKey="attacks" name="Volume Total" stroke="#00f0ff" strokeWidth={3} fillOpacity={1} fill="url(#colorVol)" />
+              <Area type="monotone" dataKey="blocked" name="Drops (FW)" stroke="#ff007f" strokeWidth={3} fillOpacity={1} fill="url(#colorBlock)" />
             </AreaChart>
           </ResponsiveContainer>
         </Panel>
@@ -262,17 +283,17 @@ function HomeTab({ stats, incidents }) {
         </Panel>
 
         <Panel title="Top Portas Alvo (Firewall)" className="flex-1">
-           <div className="flex justify-between text-[10px] text-[#8b8a96] mb-3 pb-2 border-b border-[#231f36]"><span>Porta</span><span>Hits de Alerta</span></div>
+           <div className="flex justify-between text-[10px] text-[#8b8a96] mb-3 pb-2 border-b border-[#231f36]"><span>Porta / Serviço</span><span>Hits</span></div>
            <div className="space-y-4">
              {stats.top_ports?.map((p, i) => (
                <div key={i} className="flex justify-between items-center">
                  <div className="w-2/3">
-                    <span className="text-xs text-white block mb-1 font-mono">Porta {p.port} ({PORT_NAMES[p.port] || 'Desconhecida'})</span>
+                    <span className="text-xs text-white block mb-1 font-mono">Porta {p.port} ({PORT_NAMES[p.port] || 'Outro'})</span>
                     <div className="flex h-1.5 rounded-sm overflow-hidden">
                        <div className="bg-[#7000ff] h-full" style={{width: `${Math.min(100, (p.count/500)*100)}%`}}></div>
                     </div>
                  </div>
-                 <span className="text-xs font-bold text-white font-mono">{p.count}</span>
+                 <span className="text-xs font-bold text-[#00f0ff] font-mono">{p.count}</span>
                </div>
              ))}
            </div>
@@ -283,19 +304,25 @@ function HomeTab({ stats, incidents }) {
 }
 
 // ==========================================
-// ABA 2: NÍVEL DE RISCO (Corrigida a Lógica de Risco)
+// ABA 2: NÍVEL DE RISCO (Corrigida)
 // ==========================================
 function RiskTab({ stats, hosts }) {
   const [data, setData] = useState({ pieData: [], riskData: [], barData: [] });
-  useEffect(() => { axios.get(`${API_URL}/analytics`).then(res => setData(res.data)).catch(() => {}); }, []);
+  const [recentLogs, setRecentLogs] = useState([]);
+  
+  useEffect(() => { 
+    axios.get(`${API_URL}/analytics`).then(res => setData(res.data)).catch(() => {});
+    axios.get(`${API_URL}/logs?limit=5`).then(res => setRecentLogs(res.data.logs || [])).catch(() => {});
+  }, []);
 
   const crits = stats.blocked_attacks;
   const altos = Math.floor(stats.total_threats * 0.15);
   const medios = Math.floor(stats.total_threats * 0.25);
   const baixos = stats.total_threats - crits - altos - medios;
   
-  // CORREÇÃO AQUI
-  const riskLevel = 100 - stats.posture_score;
+  // Lógica de Risco Real
+  const maxRecentRisk = recentLogs.length > 0 ? Math.max(...recentLogs.map(inc => inc.risk_score)) : 0;
+  const riskLevel = maxRecentRisk > 0 ? maxRecentRisk : (stats.total_threats > 0 ? 10 : 0);
 
   return (
     <div className="flex flex-col gap-5 h-full">
@@ -317,14 +344,12 @@ function RiskTab({ stats, hosts }) {
           </div>
 
           <div className="col-span-4 relative flex justify-center items-center h-40">
-             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-[#ff007f]/10 blur-[50px] rounded-full pointer-events-none"></div>
+             <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 ${riskLevel >= 80 ? 'bg-[#ff007f]/20' : 'bg-[#00f0ff]/10'} blur-[50px] rounded-full pointer-events-none`}></div>
              <ResponsiveContainer width="100%" height="100%">
-               {/* Corrigido para preencher o Rosa com o Risco Real */}
-               <PieChart><Pie data={[{value: riskLevel, fill: '#ff007f'}, {value: 100-riskLevel, fill: '#231f36'}]} cx="50%" cy="50%" innerRadius={60} outerRadius={75} startAngle={180} endAngle={0} dataKey="value" stroke="none" /></PieChart>
+               <PieChart><Pie data={[{value: riskLevel, fill: riskLevel >= 80 ? '#ff007f' : riskLevel >= 50 ? '#f59e0b' : '#00f0ff'}, {value: 100-riskLevel, fill: '#231f36'}]} cx="50%" cy="50%" innerRadius={60} outerRadius={75} startAngle={180} endAngle={0} dataKey="value" stroke="none" /></PieChart>
              </ResponsiveContainer>
              <div className="absolute top-[60%] left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
                 <span className="text-[10px] text-[#8b8a96] uppercase tracking-widest block mb-1">Score de Risco</span>
-                {/* Mostra o risco real calculado */}
                 <span className="text-4xl font-bold text-white">{riskLevel}%</span>
              </div>
           </div>
@@ -383,6 +408,7 @@ function RiskTab({ stats, hosts }) {
                  <YAxis stroke="#8b8a96" fontSize={10} axisLine={false} tickLine={false} />
                  <Tooltip contentStyle={{backgroundColor: '#0b0914', borderColor: '#231f36'}} />
                  <Line type="monotone" dataKey="attacks" stroke="#ff007f" strokeWidth={2} dot={{r:3, fill:'#ff007f'}} />
+                 <Line type="monotone" dataKey="blocked" stroke="#7000ff" strokeWidth={2} dot={{r:3, fill:'#7000ff'}} />
                </LineChart>
              </ResponsiveContainer>
            </Panel>
@@ -393,20 +419,44 @@ function RiskTab({ stats, hosts }) {
 }
 
 // ==========================================
-// ABA 3: MAPA DE ATAQUE
+// ABA 3: MAPA DE ATAQUE (Animado e Interativo)
 // ==========================================
 function MapTab({ stats, onBlock }) {
   const [data, setData] = useState({ pieData: [] });
-  useEffect(() => { axios.get(`${API_URL}/analytics`).then(res => setData(res.data)).catch(() => {}); }, []);
+  const globeRef = useRef();
+
+  useEffect(() => { 
+    axios.get(`${API_URL}/analytics`).then(res => setData(res.data)).catch(() => {}); 
+    if (globeRef.current) {
+      globeRef.current.controls().autoRotate = true;
+      globeRef.current.controls().autoRotateSpeed = 2.0; // Roda um pouco mais rápido aqui para dar impacto
+    }
+  }, []);
 
   return (
     <div className="relative h-full w-full rounded-xl overflow-hidden bg-[#0b0914] border border-[#231f36]">
-      <div className="absolute inset-0 flex justify-center items-center opacity-80">
-         <Globe width={900} height={600} globeImageUrl="//unpkg.com/three-globe/example/img/earth-dark.jpg" backgroundColor="rgba(0,0,0,0)" arcsData={stats.map_data || []} arcColor="color" arcDashLength={0.5} arcDashGap={0.1} arcDashAnimateTime={1200} arcStroke={1.5} showAtmosphere={false} />
+      <div className="absolute inset-0 flex justify-center items-center opacity-90 cursor-move">
+         <Globe 
+            ref={globeRef}
+            width={1000} 
+            height={700} 
+            globeImageUrl="//unpkg.com/three-globe/example/img/earth-dark.jpg" 
+            backgroundColor="rgba(0,0,0,0)" 
+            arcsData={stats.map_data || []} 
+            arcColor="color" 
+            arcDashLength={0.4} 
+            arcDashGap={0.2} 
+            arcDashAnimateTime={1000} 
+            arcStroke={2} 
+            arcAltitude={0.3} // Aumentado para as linhas saltarem mais do globo
+            showAtmosphere={true} 
+            atmosphereColor="#ff007f"
+            atmosphereAltitude={0.2}
+         />
       </div>
 
       <div className="absolute top-5 left-5 bottom-5 w-72 flex flex-col gap-5 z-10 pointer-events-none">
-        <Panel title="Top Portas Atacadas" className="bg-[#151221]/80 backdrop-blur-md pointer-events-auto">
+        <Panel title="Top Portas Atacadas" className="bg-[#151221]/80 backdrop-blur-md pointer-events-auto shadow-2xl">
            <div className="space-y-4 mt-2">
              {stats.top_ports?.map((a, i) => {
                const colors = ['bg-[#ff007f]', 'bg-[#7000ff]', 'bg-[#00f0ff]', 'bg-[#f59e0b]'];
@@ -419,11 +469,11 @@ function MapTab({ stats, onBlock }) {
              })}
            </div>
         </Panel>
-        <Panel title="Top Ameaças por tipo" className="bg-[#151221]/80 backdrop-blur-md flex-1 pointer-events-auto flex items-center justify-center">
+        <Panel title="Top Ameaças por tipo" className="bg-[#151221]/80 backdrop-blur-md flex-1 pointer-events-auto flex items-center justify-center shadow-2xl">
            <div className="flex items-center gap-4 w-full">
              <div className="w-20 h-20 relative">
                <ResponsiveContainer width="100%" height="100%">
-                 <PieChart><Pie data={data.pieData} cx="50%" cy="50%" innerRadius={25} outerRadius={35} dataKey="value" stroke="none"><Cell fill="#0ea5e9"/><Cell fill="#8b5cf6"/><Cell fill="#f59e0b"/><Cell fill="#10b981"/></Pie></PieChart>
+                 <PieChart><Pie data={data.pieData} cx="50%" cy="50%" innerRadius={25} outerRadius={35} dataKey="value" stroke="none"><Cell fill="#00f0ff"/><Cell fill="#7000ff"/><Cell fill="#f59e0b"/><Cell fill="#ff007f"/></Pie></PieChart>
                </ResponsiveContainer>
              </div>
              <div className="text-[10px] text-[#8b8a96] space-y-1">
@@ -434,7 +484,7 @@ function MapTab({ stats, onBlock }) {
       </div>
 
       <div className="absolute top-5 right-5 w-72 flex flex-col gap-5 z-10 pointer-events-none">
-         <Panel title="Top IPs Atacantes" className="bg-[#151221]/80 backdrop-blur-md pointer-events-auto">
+         <Panel title="Top IPs Atacantes" className="bg-[#151221]/80 backdrop-blur-md pointer-events-auto shadow-2xl">
             <div className="space-y-4 mt-2">
               {stats.top_attackers?.map((p, i) => {
                 const colors = ['bg-[#ff007f]', 'bg-[#7000ff]', 'bg-[#00f0ff]', 'bg-[#f59e0b]'];
@@ -448,7 +498,7 @@ function MapTab({ stats, onBlock }) {
             </div>
          </Panel>
 
-         <Panel title="Gravidade da ameaça" className="bg-[#151221]/80 backdrop-blur-md pointer-events-auto">
+         <Panel title="Gravidade da ameaça" className="bg-[#151221]/80 backdrop-blur-md pointer-events-auto shadow-2xl">
             <div className="text-3xl font-bold text-white mb-4">{stats.blocked_attacks} <span className="text-xs text-[#8b8a96] font-normal">Bloqueios Críticos</span></div>
             <div className="space-y-3 text-xs">
                <div className="flex justify-between text-[#8b8a96]"><span><span className="text-[#ff007f]">●</span> Drops de Firewall</span><span className="text-[#ff007f]">{stats.blocked_attacks}</span></div>
@@ -457,7 +507,7 @@ function MapTab({ stats, onBlock }) {
          </Panel>
       </div>
 
-      <div className="absolute bottom-5 left-1/2 -translate-x-1/2 w-[600px] bg-[#151221]/90 backdrop-blur-md border border-[#231f36] rounded-xl p-4 z-10">
+      <div className="absolute bottom-5 left-1/2 -translate-x-1/2 w-[600px] bg-[#151221]/90 backdrop-blur-md border border-[#231f36] rounded-xl p-4 z-10 shadow-[0_0_30px_rgba(0,0,0,0.5)]">
          <h4 className="text-xs text-white flex items-center justify-center gap-2 mb-3"><span className="text-[#ff007f] animate-pulse">((•))</span> Painel de Ação Rápida SOC</h4>
          <div className="flex justify-between text-[10px] text-[#8b8a96] px-4 py-2 bg-[#0b0914] rounded-lg">
             <span>Último IP Atacante</span><span>Status</span><span>Ação</span>
@@ -465,8 +515,8 @@ function MapTab({ stats, onBlock }) {
          {stats.top_attackers && stats.top_attackers[0] && (
            <div className="flex justify-between items-center text-xs text-white px-4 py-3 mt-2 hover:bg-[#231f36] rounded-lg transition-colors">
               <span className="font-mono text-[#00f0ff]">{stats.top_attackers[0][0]}</span>
-              <span className="text-[#ff007f] font-bold">Gerando Drops</span>
-              <button onClick={() => onBlock(stats.top_attackers[0][0])} className="bg-[#ff007f] hover:bg-[#d6006b] px-3 py-1 rounded text-[10px] font-bold">SOAR BLOCK</button>
+              <span className="text-[#ff007f] font-bold animate-pulse">Ataque em Curso</span>
+              <button onClick={() => onBlock(stats.top_attackers[0][0])} className="bg-[#ff007f] hover:bg-[#d6006b] px-3 py-1 rounded text-[10px] font-bold shadow-[0_0_10px_rgba(255,0,127,0.5)]">SOAR BLOCK</button>
            </div>
          )}
       </div>
@@ -503,25 +553,98 @@ function ActiveHostsTab({ hosts }) {
   );
 }
 
-// ─── ABA: FIREWALL RULES ───
+// ==========================================
+// ABA: POLÍTICAS DO FIREWALL (Visão Corporativa)
+// ==========================================
 function FirewallRulesTab() {
   const [rules, setRules] = useState([]);
-  useEffect(() => { axios.get(`${API_URL}/firewall-rules`).then(res => setRules(res.data)).catch(() => {}); }, []);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    axios.get(`${API_URL}/firewall-rules`)
+      .then(res => {
+        setRules(res.data);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
   return (
-    <div className="bg-[#151221] border border-[#231f36] rounded-2xl p-6 h-full">
-      <h2 className="text-lg font-bold text-white mb-4">FortiGate Policies</h2>
-      <table className="w-full text-left text-sm">
-        <thead className="text-[#8b8a96] border-b border-[#231f36]"><tr><th className="pb-3">ID</th><th className="pb-3">Name</th><th className="pb-3">Action</th><th className="pb-3">Hits</th></tr></thead>
-        <tbody>
-          {rules.map(r => (
-            <tr key={r.id} className="border-b border-[#231f36]">
-              <td className="py-4 text-[#8b8a96] font-mono">#{r.id}</td><td className="py-4 text-white">{r.name}</td>
-              <td className="py-4"><span className={`px-2 py-1 rounded text-[10px] font-bold ${r.action === 'DENY' ? 'bg-[#ff007f]/10 text-[#ff007f]' : 'bg-[#10b981]/10 text-[#10b981]'}`}>{r.action}</span></td>
-              <td className="py-4 text-[#00f0ff] font-mono">{r.hits}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="flex flex-col gap-5 h-full">
+      <Panel 
+        title="Políticas de Segurança Ativas - FortiGate Core" 
+        rightAction={<span className="bg-[#0b0914] text-[#00f0ff] border border-[#231f36] text-[10px] rounded px-2 py-1 animate-pulse font-mono">Sincronizado via API</span>}
+      >
+        <div className="overflow-x-auto mt-2">
+          <table className="w-full text-left text-sm whitespace-nowrap">
+            <thead>
+              <tr className="text-[#8b8a96] border-b border-[#231f36] text-xs uppercase tracking-wider">
+                <th className="pb-3 font-medium">ID</th>
+                <th className="pb-3 font-medium">Nome da Regra</th>
+                <th className="pb-3 font-medium">Origem (Source)</th>
+                <th className="pb-3 font-medium">Destino (Destination)</th>
+                <th className="pb-3 font-medium">Serviço</th>
+                <th className="pb-3 font-medium">Ação</th>
+                <th className="pb-3 font-medium">Hits (Contador)</th>
+                <th className="pb-3 font-medium text-right">Status</th>
+              </tr>
+            </thead>
+            <tbody className="font-mono text-xs">
+              {rules.map((rule, i) => (
+                <tr key={i} className="border-b border-[#231f36]/40 hover:bg-[#0b0914] transition-colors">
+                  <td className="py-4 text-[#8b8a96] font-bold">#{rule.id}</td>
+                  <td className="py-4 text-white font-sans font-medium">
+                    {rule.name || <span className="text-[#524e6e] italic">implicit_deny</span>}
+                  </td>
+                  <td className="py-4">
+                    <span className={`px-2 py-0.5 rounded text-[11px] ${
+                      rule.source.includes('SOC_BLOCKLIST') 
+                        ? 'bg-[#ff007f]/10 text-[#ff007f] border border-[#ff007f]/30 font-bold animate-pulse' 
+                        : 'bg-[#231f36] text-[#c3c2cc]'
+                    }`}>
+                      {rule.source}
+                    </span>
+                  </td>
+                  <td className="py-4 text-[#c3c2cc]">{rule.destination}</td>
+                  <td className="py-4">
+                    <span className="text-[#00f0ff] bg-[#00f0ff]/5 px-2 py-0.5 rounded border border-[#00f0ff]/10">
+                      {rule.service}
+                    </span>
+                  </td>
+                  <td className="py-4">
+                    <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
+                      rule.action === 'ACCEPT' ? 'bg-[#10b981]/10 text-[#10b981]' : 'bg-[#ff007f]/10 text-[#ff007f]'
+                    }`}>
+                      {rule.action}
+                    </span>
+                  </td>
+                  <td className="py-4 text-white font-bold">{rule.hits}</td>
+                  <td className="py-4 text-right">
+                    <span className={`inline-flex items-center gap-1.5 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${
+                      rule.status === 'enable' ? 'bg-[#10b981]/10 text-[#10b981]' : 'bg-[#8b8a96]/10 text-[#8b8a96]'
+                    }`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${rule.status === 'enable' ? 'bg-[#10b981] animate-pulse' : 'bg-[#8b8a96]'}`}></span>
+                      {rule.status === 'enable' ? 'Ativa' : 'Inativa'}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          
+          {loading && (
+            <div className="text-center text-[#8b8a96] text-xs py-10 animate-pulse">
+              Consultando tabelas CMDB do FortiOS Daemon...
+            </div>
+          )}
+          
+          {!loading && rules.length === 0 && (
+            <div className="text-center text-[#8b8a96] text-xs py-10">
+              Nenhuma regra retornada ou falha na comunicação com o Firewall.
+            </div>
+          )}
+        </div>
+      </Panel>
     </div>
   );
 }
@@ -870,16 +993,18 @@ const LoginScreen = ({ onLogin }) => {
     else { alert('Acesso Negado'); }
   };
 
-  return (
+return (
     <div className="min-h-screen bg-[#0b0914] flex items-center justify-center font-sans p-4 relative overflow-hidden">
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#7000ff]/20 rounded-full blur-[120px]"></div>
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#ff007f]/10 rounded-full blur-[120px]"></div>
+      {/* Brilho de fundo roxo */}
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#7000ff]/10 rounded-full blur-[120px]"></div>
       
       <div className="max-w-md w-full bg-[#151221] border border-[#231f36] rounded-2xl p-10 shadow-2xl relative z-10">
         <div className="flex flex-col items-center mb-10">
-          <div className="w-16 h-16 bg-[#7000ff]/10 border border-[#7000ff]/30 flex items-center justify-center rounded-2xl mb-4"><ShieldAlert className="text-[#00f0ff]" size={32} /></div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">NG-SOC</h1>
-          <p className="text-[#8b8a96] text-xs mt-2 uppercase tracking-widest font-bold">Enterprise Authentication</p>
+          <div className="w-20 h-20 bg-[#7000ff]/10 border border-[#7000ff]/30 flex items-center justify-center rounded-2xl mb-4 shadow-[0_0_20px_rgba(112,0,255,0.2)]">
+            <ShieldAlert className="text-[#7000ff]" size={40} />
+          </div>
+          <h1 className="text-4xl font-bold text-white tracking-tighter">ELYSIUM<span className="text-[#7000ff]">.</span></h1>
+          <p className="text-[#7000ff] text-[10px] mt-2 uppercase tracking-[0.4em] font-bold">Cyber Defense Intelligence</p>
         </div>
         <form onSubmit={handleAuth} className="space-y-4">
           <input type="text" value={user} onChange={e => setUser(e.target.value)} placeholder="Operator ID" className="w-full bg-[#0b0914] border border-[#231f36] focus:border-[#7000ff] text-white p-4 rounded-xl outline-none transition-all placeholder:text-[#8b8a96]" />
@@ -954,16 +1079,33 @@ export default function App() {
     setIsTyping(false);
   };
 
-  if (!isAuthenticated) return <LoginScreen onLogin={(user) => { setIsAuthenticated(true); setCurrentUser(user); }} />;
+if (!isAuthenticated) return <LoginScreen onLogin={(user) => { setIsAuthenticated(true); setCurrentUser(user); }} />;
 
   return (
     <div className="min-h-screen bg-[#0b0914] text-[#8b8a96] font-sans flex overflow-hidden selection:bg-[#7000ff]/30">
+      
+      {/* 🚀 INÍCIO DO ESTILO CUSTOMIZADO DAS BARRAS DE ROLAGEM 🚀 */}
+      <style>
+        {`
+          * { scrollbar-width: thin; scrollbar-color: #ff007f #0b0914; }
+          *::-webkit-scrollbar { width: 6px; height: 6px; }
+          *::-webkit-scrollbar-track { background: #0b0914; border-radius: 10px; }
+          *::-webkit-scrollbar-thumb { background: #ff007f; border-radius: 10px; box-shadow: 0 0 5px rgba(255, 0, 127, 0.5); }
+          *::-webkit-scrollbar-thumb:hover { background: #d6006b; }
+        `}
+      </style>
+      {/* 🚀 FIM DO ESTILO CUSTOMIZADO 🚀 */}
+
       {popup && <IncidentPopup incident={popup} onClose={() => setPopup(null)} onBlock={runPlaybook} />}
 
       {/* SIDEBAR LATERAL */}
       <aside className="w-[70px] bg-[#151221] border-r border-[#231f36] flex flex-col items-center py-6 z-20">
-         <div className="text-[#00f0ff] mb-8"><ShieldAlert size={28} /></div>
-         <div className="flex flex-col gap-4 w-full px-2">
+         <div className="mb-8 flex flex-col items-center gap-1">
+          <div className="w-10 h-10 bg-[#7000ff]/10 border border-[#7000ff]/30 flex items-center justify-center rounded-lg shadow-[0_0_15px_rgba(112,0,255,0.2)]">
+            <ShieldAlert size={22} className="text-[#7000ff]" />
+          </div>
+          <span className="text-[8px] font-bold text-[#7000ff] tracking-tighter">ELYSIUM</span>
+        
            {[
              { id: 'home', icon: <LayoutDashboard size={20} />, title: 'Dashboard' },
              { id: 'risk', icon: <Activity size={20} />, title: 'Nível de Risco' },
@@ -989,6 +1131,13 @@ export default function App() {
         {/* HEADER TOP */}
         <header className="h-[70px] border-b border-[#231f36] bg-[#0b0914]/80 backdrop-blur-md flex justify-between items-center px-8 z-10">
           <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-[#7000ff] font-black text-2xl tracking-tighter">E</span>
+              <h2 className="text-white font-bold text-xl uppercase tracking-[0.2em]">
+                ELYSIUM<span className="text-[#7000ff]">.</span>SOC
+              </h2>
+          </div>
+          <span className="text-[10px] text-[#00f0ff] font-mono border border-[#00f0ff]/30 bg-[#00f0ff]/10 px-2 py-1 rounded ml-2">CORE_ENGINE: v2.5</span>
              <Menu size={20} className="text-[#8b8a96]" />
              <h2 className="text-white font-bold text-xl uppercase tracking-widest">
                {activeTab === 'home' ? 'Home' : 
@@ -1020,8 +1169,6 @@ export default function App() {
             {activeTab === 'firewall' && <FirewallRulesTab />}
             {activeTab === 'intel' && <ThreatIntelTab />}
             {activeTab === 'alerts' && <AlertConfigTab />}
-            
-            {/* AQUI ESTÁ O REPORTS RECEBENDO OS LOGS CORRETAMENTE! */}
             {activeTab === 'reports' && <ReportsTab logs={logs} />}
           </div>
 
@@ -1033,9 +1180,14 @@ export default function App() {
               </div>
               <div className="flex-1 overflow-y-auto p-4 space-y-4 text-[11px] font-mono">
                 {chatLog.map((m, i) => (
-                  <div key={i} className={`p-3 rounded-xl border ${m.role==='ai' ? 'bg-[#7000ff]/10 border-[#7000ff]/30 text-white' : 'bg-[#231f36] border-[#231f36] text-[#8b8a96]'}`}>
-                    <span className={`font-bold mb-1 block ${m.role==='ai'?'text-[#00f0ff]':'text-[#ff007f]'}`}>{m.role === 'ai' ? 'SYS_AI:' : 'OP:'}</span>
-                    <span dangerouslySetInnerHTML={{ __html: m.text.replace(/\n/g, '<br/>') }} />
+                  <div key={i} className={`p-4 rounded-xl border mb-3 ${m.role==='ai' ? 'bg-[#151221] border-[#7000ff]/30' : 'bg-[#231f36] border-transparent'}`}>
+                    <div className={`font-bold text-xs mb-2 flex items-center gap-2 ${m.role==='ai'?'text-[#00f0ff]':'text-[#ff007f]'}`}>
+                      {m.role === 'ai' ? <ShieldAlert size={14}/> : <User size={14}/>}
+                      {m.role === 'ai' ? 'ELYSIUM_CO_PILOT' : 'OPERATOR'}
+                    </div>
+                    <div className="text-[12px] text-white leading-relaxed font-mono whitespace-pre-wrap">
+                      {m.text}
+                    </div>
                   </div>
                 ))}
                 {isTyping && <div className="text-[#00f0ff] animate-pulse">Consultando heurísticas...</div>}

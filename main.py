@@ -230,59 +230,85 @@ def detect_zero_day_heuristics(raw_log: str) -> bool:
 # --- MOTOR DE CAPTURA SYSLOG (TEMPO REAL) ---
 def start_syslog_server():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.bind(('0.0.0.0', 5140))
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    print("[+] Motor SIEM, Receptor Syslog e Heurística Zero-Day ativos na porta UDP 5140...")
+    sock.bind(("0.0.0.0", 5140))
+    print("Servidor Syslog rodando na porta 5140...")
     
+    conn = sqlite3.connect('ng_soc.db', check_same_thread=False)
+    cursor = conn.cursor()
+
     while True:
         try:
             data, addr = sock.recvfrom(4096)
             log_message = data.decode('utf-8', errors='ignore')
 
-            # Extração Básica (Camadas 3 e 4)
+            # Extração Básica
             src = re.search(r'srcip=([^\s]+)', log_message)
             dst = re.search(r'dstip=([^\s]+)', log_message)
             port = re.search(r'dstport=([0-9]+)', log_message)
             act = re.search(r'action="?([a-zA-Z\-]+)"?', log_message)
 
-            # Extração Avançada (Camada 7, Identidade e IPS)
+            # Extração Avançada
             app_match = re.search(r'app="?([^"\s]+)"?', log_message)
             msg_match = re.search(r'msg="([^"]+)"', log_message)
             user_match = re.search(r'user="?([^"\s]+)"?', log_message)
 
+            app_name = app_match.group(1) if app_match else ""
+            
+            # Fallback L7 (Resolve o problema de painel vazio)
+            if not app_name or app_name == "":
+                dst_port_str = port.group(1) if port else ""
+                port_to_app = {
+                    '80': 'HTTP.Web',
+                    '443': 'HTTPS.Browser',
+                    '22': 'SSH.Terminal',
+                    '53': 'DNS.Service',
+                    '3389': 'RDP.Connection',
+                    '445': 'SMB.Share',
+                    '8080': 'HTTP.Proxy'
+                }
+                app_name = port_to_app.get(dst_port_str, "Unknown.App")
+
             src_ip = src.group(1) if src else "Desconhecido"
+            dst_port_str = port.group(1) if port else ""
+            act_str = act.group(1).lower() if act else "unknown"
+
             if src_ip != "Desconhecido" and src_ip != FGT_IP:
                 
-                # Validação Dupla: Correlação Temporal + Heurística de Payload (0-Day)
                 is_correlated_attack = correlate_events(src_ip)
                 is_0day = detect_zero_day_heuristics(log_message)
+
+                # Whitelist: Ignorar navegação normal para não poluir o SOC
+                if dst_port_str in ['80', '443', '53', '123', ''] and act_str in ['accept', 'pass', 'client-rst', 'server-rst', 'close', 'timeout']:
+                    is_correlated_attack = False
                 
-                # Risco bate 100 imediatamente se for RCE ou Brute Force
+                # Risco Máximo
                 correlated_risk = 100 if is_correlated_attack or is_0day else 0
+
+                # Cálculo do Risco Base
+                base_score = 10 
+                if act_str in ["deny", "drop"]: 
+                    base_score = 70
+                elif dst_port_str in ['22', '3389']: 
+                    base_score = 50
+
+                external_score = get_external_risk_score(src_ip)
+                final_risk = max(base_score, external_score, correlated_risk)
                 
-                app_name = app_match.group(1) if app_match else "Desconhecida"
                 threat_msg = msg_match.group(1) if msg_match else "N/A"
                 user_name = user_match.group(1) if user_match else "Anónimo"
 
                 agora = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                
                 cursor.execute('''INSERT INTO logs 
                                (timestamp, src_ip, dst_ip, dst_port, action, raw_log, correlated_risk, app_name, threat_msg, user_name, is_zero_day) 
                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', 
-                               (agora, src_ip, dst.group(1) if dst else "", port.group(1) if port else "", act.group(1) if act else "unknown", log_message, correlated_risk, app_name, threat_msg, user_name, int(is_0day)))
+                               (agora, src_ip, dst.group(1) if dst else "", dst_port_str, act_str, log_message, final_risk, app_name, threat_msg, user_name, int(is_0day)))
                 conn.commit()
-                
-                # Regras de cálculo dinâmico de risco híbrido
-                base_score = 20
-                if act and act.group(1).lower() in ["deny", "drop"]: base_score = 70
-                elif port and port.group(1) in ['22', '3389']: base_score = 50
-                
-                external_score = get_external_risk_score(src_ip)
-                final_risk = max(base_score, external_score, correlated_risk)
 
                 if final_risk >= alert_config["threshold"]:
                     trigger_critical_alert(src_ip, final_risk, log_message)
-        except: pass
+        except Exception:
+            pass
 
 # --- LIFESPAN: CONFIGURAÇÃO SEGURA DE STARTUP ---
 @asynccontextmanager
@@ -372,7 +398,7 @@ def get_stats():
     blocked = cursor.execute(f"SELECT COUNT(*) FROM logs WHERE action IN ('deny', 'drop') AND src_ip != '{FGT_IP}'").fetchone()[0] or 0
     epm = cursor.execute(f"SELECT COUNT(*) FROM logs WHERE timestamp > datetime('now', 'localtime', '-1 minute') AND src_ip != '{FGT_IP}'").fetchone()[0] or 0
     top_ports = [{"port": str(r[0]), "count": r[1]} for r in cursor.execute(f"SELECT dst_port, COUNT(*) as c FROM logs WHERE src_ip != '{FGT_IP}' GROUP BY dst_port ORDER BY c DESC LIMIT 5").fetchall() if r[0]]
-    timeline = [{"time": r[0], "attacks": r[1]} for r in cursor.execute(f"SELECT substr(timestamp, 12, 5) as t, COUNT(*) as c FROM logs WHERE src_ip != '{FGT_IP}' GROUP BY t ORDER BY timestamp DESC LIMIT 8").fetchall()][::-1]
+    timeline = [{"time": r[0], "attacks": r[1], "blocked": r[2]} for r in cursor.execute(f"SELECT substr(timestamp, 12, 5) as t, COUNT(*) as c, SUM(CASE WHEN action IN ('deny', 'drop') THEN 1 ELSE 0 END) as b FROM logs WHERE src_ip != '{FGT_IP}' GROUP BY t ORDER BY timestamp DESC LIMIT 8").fetchall()][::-1]
     map_data = []
     for row in cursor.execute(f"SELECT DISTINCT src_ip FROM logs WHERE src_ip != '{FGT_IP}' ORDER BY id DESC LIMIT 15").fetchall():
         geo = get_geo_location(row[0])
@@ -406,7 +432,25 @@ def get_analytics():
 @app.get("/api/threat-intel/{ip}")
 def threat_intelligence(ip: str):
     ip = ip.strip()
-    if ip.startswith("192.") or ip.startswith("10.") or ip.startswith("172."): return {"ip": ip, "reputation": 0, "isp": "Intranet Corporativa SOC", "country": "Rede Local (LAN)", "tags": ["Internal Traffic", "Clean"]}
+    
+    # SE FOR IP DA REDE LOCAL, AVALIAMOS O COMPORTAMENTO DELE NO BANCO DE DADOS
+    if ip.startswith("192.") or ip.startswith("10.") or ip.startswith("172."):
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        # Conta quantos pacotes maliciosos esse IP interno gerou
+        drops = cursor.execute(f"SELECT COUNT(*) FROM logs WHERE src_ip = '{ip}' AND action IN ('deny', 'drop')").fetchone()[0] or 0
+        conn.close()
+        
+        internal_risk = min(100, drops * 20) # Cada bloqueio sobe o risco interno em 20
+        
+        tags = ["Internal Traffic"]
+        if internal_risk > 50: tags.append("Compromised/Malicious")
+        elif internal_risk > 0: tags.append("Suspicious")
+        else: tags.append("Clean")
+        
+        return {"ip": ip, "reputation": internal_risk, "isp": "Intranet Corporativa SOC", "country": "Rede Local (LAN)", "tags": tags}
+        
+    # SE FOR IP EXTERNO, MANTÉM A LÓGICA ORIGINAL
     geo = get_geo_location(ip)
     score = get_external_risk_score(ip)
     tags = ["Malicious", "Botnet"] if score > 80 else ["Suspicious", "Scanner"] if score > 40 else ["Clean"]
@@ -433,14 +477,72 @@ def run_playbook(req: PlaybookRequest):
         "Playbook de Resposta Automatizada a Incidentes finalizado com sucesso."
     ]}
 
+# ==========================================
+# ROTA DE BLOQUEIO (SOAR COMPLETO: Objeto + Grupo)
+# ==========================================
 @app.post("/api/block")
-def block_ip(req: BlockRequest): return {"result": block_ip_fortigate(req.ip_address)}
+def block_ip(data: dict):
+    ip = data.get("ip_address")
+    if not ip:
+        return {"result": "IP não fornecido."}
+
+    headers = {"Authorization": f"Bearer {API_TOKEN}"}
+    
+    try:
+        # AÇÃO 1: Criar o objeto de endereço no FortiGate
+        addr_payload = {
+            "name": ip,
+            "type": "ipmask",
+            "subnet": f"{ip} 255.255.255.255"
+        }
+        requests.post(f"http://{FGT_IP}/api/v2/cmdb/firewall/address", headers=headers, json=addr_payload, verify=False)
+        
+        # AÇÃO 2: Puxar os membros atuais do grupo SOC_BLOCKLIST
+        grp_url = f"http://{FGT_IP}/api/v2/cmdb/firewall/addrgrp/SOC_BLOCKLIST"
+        res_group = requests.get(grp_url, headers=headers, verify=False)
+        
+        if res_group.status_code == 200:
+            dados_grupo = res_group.json()
+            if "results" in dados_grupo and len(dados_grupo["results"]) > 0:
+                membros_atuais = dados_grupo["results"][0].get("member", [])
+                
+                # Verifica se o IP já está no grupo para não duplicar
+                if not any(m.get("name") == ip for m in membros_atuais):
+                    membros_atuais.append({"name": ip})
+                    
+                    # AÇÃO 3: Atualizar o grupo com a nova lista de membros
+                    requests.put(grp_url, headers=headers, json={"member": membros_atuais}, verify=False)
+                    return {"result": f"IP {ip} bloqueado e adicionado à SOC_BLOCKLIST!"}
+                else:
+                    return {"result": f"O IP {ip} já estava na SOC_BLOCKLIST."}
+        
+        return {"result": "Objeto criado, mas o grupo SOC_BLOCKLIST não foi encontrado no FortiGate."}
+    except Exception as e:
+        return {"result": f"Erro na API do FortiGate: {str(e)}"}
 
 @app.get("/api/firewall-rules")
 def get_firewall_rules():
     try:
         res = requests.get(f"http://{FGT_IP}/api/v2/cmdb/firewall/policy", headers={"Authorization": f"Bearer {API_TOKEN}"}, verify=False, timeout=3)
-        if res.status_code == 200: return [{"id": r.get("policyid"), "name": r.get("name"), "action": r.get("action").upper(), "hits": r.get("hitcount", 0)} for r in res.json().get("results", [])]
+        if res.status_code == 200: 
+            rules = []
+            for r in res.json().get("results", []):
+                # O FortiGate envia as origens/destinos como listas, precisamos formatar
+                src = ", ".join([s.get("name", "") for s in r.get("srcaddr", [])])
+                dst = ", ".join([d.get("name", "") for d in r.get("dstaddr", [])])
+                srv = ", ".join([s.get("name", "") for s in r.get("service", [])])
+                
+                rules.append({
+                    "id": r.get("policyid"), 
+                    "name": r.get("name"), 
+                    "action": r.get("action").upper(), 
+                    "hits": r.get("hitcount", 0),
+                    "source": src,
+                    "destination": dst,
+                    "service": srv,
+                    "status": r.get("status", "enable")
+                })
+            return rules
     except: pass
     return []
 
@@ -483,9 +585,45 @@ def send_report_now(req: ManualReportRequest):
     
 @app.post("/api/chat")
 def chat_ai(req: ChatRequest):
-    if not client: return {"response": "Assistente de IA Offline. Motor LLM fora de alcance."}
-    try: return {"response": client.chats.create(model="gemini-2.5-flash").send_message(f"Você é um Assistente tático de SOC focado em Ciberdefesa. Responda brevemente e de forma técnica ao analista: {req.message}").text}
-    except Exception as e: return {"response": f"Falha ao contatar o motor de IA: {e}"}
+    if not client: 
+        return {"response": "Assistente de IA Offline. Motor LLM fora de alcance."}
+    
+    user_msg = req.message.lower()
+    ip_match = re.search(r'\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b', user_msg)
+    
+    try:
+        # 1. AÇÃO DE BLOQUEIO
+        if ("bloque" in user_msg or "block" in user_msg) and ip_match:
+            ip_alvo = ip_match.group()
+            # Chama a lógica de bloqueio
+            resultado = block_ip({"ip_address": ip_alvo})
+            return {"response": f"Comando executado: {resultado.get('result')}"}
+
+        # 2. AÇÃO DE ANÁLISE DE IP
+        elif ("analis" in user_msg or "verifique" in user_msg or "o que" in user_msg) and ip_match:
+            ip_alvo = ip_match.group() # Definimos aqui
+            
+            # Consulta o SQLite usando o alias para corrigir o erro da coluna
+            conn = sqlite3.connect('ng_soc.db')
+            cursor = conn.cursor()
+            # Note o alias 'correlated_risk AS risk_score'
+            logs = cursor.execute("SELECT timestamp, action, threat_msg, correlated_risk AS risk_score FROM logs WHERE src_ip = ? ORDER BY id DESC LIMIT 10", (ip_alvo,)).fetchall()
+            conn.close()
+            
+            if logs:
+                dossie = "\n".join([f"[{l[0]}] Ação: {l[1]} | Risco: {l[3]} | Info: {l[2]}" for l in logs])
+                prompt = f"O analista pediu uma análise do IP {ip_alvo}. Histórico: {dossie}. Analise se é malicioso."
+            else:
+                prompt = f"O analista pediu uma análise do IP {ip_alvo}, mas não encontrei histórico."
+            
+            return {"response": client.chats.create(model="gemini-2.5-flash").send_message(prompt).text}
+
+        # 3. CHAT NORMAL
+        else:
+            return {"response": client.chats.create(model="gemini-2.5-flash").send_message(f"Você é um Assistente tático de SOC focado em Ciberdefesa. Responda brevemente e de forma técnica ao analista: {req.message}").text}
+
+    except Exception as e:
+        return {"response": f"Falha ao processar comando: {str(e)}"}
 
 if __name__ == "__main__":
     import uvicorn
