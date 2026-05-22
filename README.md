@@ -127,12 +127,11 @@ npm run dev
 
 📍 A Dashboard ficará disponível em http://localhost:5173.
 
-🔑 Credenciais padrão: admin / senai2026
+🔑 Credenciais padrão: admin / admin
 
 3. Configuração do FortiGate (CLI)
 Para que o firewall alimente o SOC, rode os seguintes comandos no console do FortiOS:
 
-Bash
 
 config log syslogd setting
   
