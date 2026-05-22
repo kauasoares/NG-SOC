@@ -113,6 +113,7 @@ FGT_IP = "IP-FORTIGATE"
 
 API_TOKEN = "API-GERADA-FORTIFATE" 
 
+
 renomeie o arquivo .env.example para .env
 
 Gere uma api da IA do gemini e cole em
