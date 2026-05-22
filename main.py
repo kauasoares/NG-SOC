@@ -27,8 +27,8 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 load_dotenv()
 
 # --- CONFIGURAÇÕES DO AMBIENTE ---
-FGT_IP = "192.168.158.130"
-API_TOKEN = "xQtH7yq7nHs38Hpr74Hy7jpqjtry9p" 
+FGT_IP = "IP-DO-FORIGATE"
+API_TOKEN = "API-TOKEN-GERADA-FORTIGATE" 
 
 try:
     client = genai.Client()
