@@ -1,6 +1,6 @@
 <div align="center">
   
-# 🛡️ ELYSINA-NG-SOC | Next-Generation Command Center
+# 🛡️ ELYSIN-NG-SOC | Next-Generation Command Center
 **Plataforma Avançada de SIEM & SOAR com Integração em Tempo Real**
 
 [![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
