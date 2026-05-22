@@ -107,14 +107,14 @@ git clone [https://github.com/kauasoares/ng-soc.git](https://github.com/kauasoar
 pip install -r requirements.txt
 
 # Colocando as APIs e IP do fotifate
-abra o arquivo main.py e procure a linha 30 e 31
+1. abra o arquivo main.py e procure a linha 30 e 31
 
 FGT_IP = "IP-FORTIGATE" 
 
 API_TOKEN = "API-GERADA-FORTIFATE" 
 
 
-renomeie o arquivo .env.example para .env
+2. renomeie o arquivo .env.example para .env
 
 Gere uma api da IA do gemini e cole em
 
