@@ -1,6 +1,6 @@
 <div align="center">
   
-# 🛡️ NG-SOC | Next-Generation Command Center
+# 🛡️ ELYSINA-NG-SOC | Next-Generation Command Center
 **Plataforma Avançada de SIEM & SOAR com Integração em Tempo Real**
 
 [![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
@@ -9,7 +9,7 @@
 [![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![Fortinet](https://img.shields.io/badge/Hardware-FortiGate-CC0000?style=for-the-badge&logo=fortinet&logoColor=white)](https://www.fortinet.com/)
 
-O **NG-SOC** é um laboratório de Defesa Cibernética de ponta a ponta. Ele resolve o problema da fadiga de alertas ao centralizar a ingestão de logs do firewall, aplicar inteligência analítica, detetar anomalias heurísticas e permitir a contenção imediata de ameaças com um único clique.
+O **ELYSIAN-NG-SOC** é um laboratório de Defesa Cibernética de ponta a ponta. Ele resolve o problema da fadiga de alertas ao centralizar a ingestão de logs do firewall, aplicar inteligência analítica, detetar anomalias heurísticas e permitir a contenção imediata de ameaças com um único clique.
 
 </div>
 
@@ -102,8 +102,6 @@ Abra um terminal e execute:
 Bash
 # Clonar o repositório
 git clone [https://github.com/kauasoares/ng-soc.git](https://github.com/kauasoares/ng-soc.git)
-
-cd ng-soc/backend
 
 # Instalar dependências
 pip install -r requirements.txt
