@@ -108,11 +108,15 @@ pip install -r requirements.txt
 
 # Colocando as APIs e IP do fotifate
 abra o arquivo main.py e procure a linha 30 e 31
+
 FGT_IP = "IP-FORTIGATE" 
+
 API_TOKEN = "API-GERADA-FORTIFATE" 
 
 renomeie o arquivo .env.example para .env
+
 Gere uma api da IA do gemini e cole em
+
 GEMINI_API_KEY=coloque_sua_chave_aqui
 
 # Executar o motor SIEM e API
